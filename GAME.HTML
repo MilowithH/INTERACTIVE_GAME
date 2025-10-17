@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connectors & Courtesy Quest</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="shortcut icon" href="logoSena.png" style="object-fit: contain;">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        .game-card {
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease-in-out;
+        }
+        .option-btn {
+            transition: all 0.2s ease-in-out;
+        }
+        .option-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .correct {
+            background-color: #22c55e !important;
+            color: white !important;
+            border-color: #16a34a !important;
+        }
+        .incorrect {
+            background-color: #ef4444 !important;
+            color: white !important;
+            border-color: #dc2626 !important;
+        }
+        .disabled-options .option-btn {
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+        .progress-bar-fill {
+            transition: width 0.5s ease-in-out;
+        }
+        .bg-blue-600 {
+            background-color: #32CD32 !important; /* Cambiado a verde grass */
+        }
+        .hover\:bg-blue-700:hover {
+            background-color: #228B22 !important; /* Cambiado a verde grass oscuro */
+        }
+        .text-blue-600 {
+            color: #32CD32 !important; /* Cambiado a verde grass */
+        }
+        .logo-sena {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            width: 50px;
+            height: auto;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <div id="game-container" class="game-card bg-white w-full max-w-2xl rounded-2xl p-6 md:p-8 text-center">
+
+        <!-- Pantalla de Inicio -->
+        <div id="start-screen">
+            <h1 class="text-3xl md:text-4xl font-bold text-slate-800 mb-2">Connectors & Courtesy Quest</h1>
+            <p class="text-slate-600 mb-6">¡Demuestra tu dominio del inglés! Elige la opción correcta para completar la conversación.</p>
+            <button id="start-btn" class="w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors text-lg shadow-lg">
+                Comenzar Aventura
+            </button>
+        </div>
+
+        <!-- Pantalla del Juego (oculta por defecto) -->
+        <div id="game-screen" class="hidden">
+            <div class="mb-6">
+                 <div class="flex justify-between items-center mb-2 text-sm text-slate-500">
+                    <span id="question-counter"></span>
+                    <span id="score-display">Puntuación: 0</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                    <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full progress-bar-fill" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <p id="scenario-text" class="text-xl md:text-2xl text-slate-700 min-h-[100px] mb-8"></p>
+            
+            <div id="options-container" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <!-- Las opciones se generan con JS -->
+            </div>
+
+            <div id="feedback-container" class="min-h-[60px] pt-4">
+                 <p id="explanation-text" class="text-slate-600 text-base opacity-0 transition-opacity duration-300"></p>
+            </div>
+        </div>
+
+        <!-- Pantalla Final (oculta por defecto) -->
+        <div id="end-screen" class="hidden">
+            <h2 class="text-3xl md:text-4xl font-bold text-slate-800 mb-2">¡Misión Cumplida!</h2>
+            <p class="text-slate-600 mb-4 text-lg">Tu resultado final es:</p>
+            <p id="final-score" class="text-5xl font-bold text-blue-600 mb-6"></p>
+            <p id="final-message" class="text-slate-700 mb-8"></p>
+            <button id="restart-btn" class="w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors text-lg shadow-lg">
+                Jugar de Nuevo
+            </button>
+        </div>
+
+        <!-- Logo SENA dentro de la sección blanca -->
+        <img src="logoSena.png" alt="Logo SENA" class="logo-sena" style="position: absolute; bottom: 10px; right: 10px;">
+
+    </div>
+
+    <script>
+    // --- MODELO: Datos del Juego ---
+    const gameData = [
+        {
+            scenario: "You need to interrupt a conversation politely. You say:",
+            options: ["Hey, listen!", "Excuse me...", "Talk to me."],
+            answer: "Excuse me...",
+            explanation: "'Excuse me' is the standard polite phrase for interrupting or getting someone's attention."
+        },
+        {
+            scenario: "I wanted to go to the beach, ___ it started raining heavily.",
+            options: ["so", "but", "because"],
+            answer: "but",
+            explanation: "'But' is a connector used to show a contrast between two ideas."
+        },
+        {
+            scenario: "___ you please pass the salt?",
+            options: ["Will", "Could", "Should"],
+            answer: "Could",
+            explanation: "'Could you...' is a very common and polite way to ask someone to do something."
+        },
+        {
+            scenario: "She studied hard for the test; ___, she got a perfect score.",
+            options: ["however", "therefore", "in addition"],
+            answer: "therefore",
+            explanation: "'Therefore' is used to show the result or consequence of something."
+        },
+        {
+            scenario: "A waiter brings your food. What's a polite response?",
+            options: ["It's about time.", "Give it here.", "Thank you very much."],
+            answer: "Thank you very much.",
+            explanation: "Always thank someone providing a service! 'Thank you' is a key courtesy expression."
+        },
+        {
+            scenario: "He likes to play soccer. ___, he enjoys playing basketball.",
+            options: ["Moreover", "On the other hand", "Finally"],
+            answer: "Moreover",
+            explanation: "'Moreover' or 'In addition' are connectors used to add another similar idea."
+        },
+        {
+            scenario: "I'm sorry, I didn't hear you. ___ you repeat that, please?",
+            options: ["Can", "Will", "Did"],
+            answer: "Can",
+            explanation: "'Can you...' is another polite way to make a request, often used for simple things."
+        },
+        {
+            scenario: "___ the bad weather, the picnic was cancelled.",
+            options: ["Because", "As a result", "Due to"],
+            answer: "Due to",
+            explanation: "'Due to' is a formal way to say 'because of' and explains the reason for something."
+        },
+        {
+            scenario: "You accidentally bump into someone. You should say:",
+            options: ["Watch out!", "I'm sorry!", "My fault."],
+            answer: "I'm sorry!",
+            explanation: "Saying 'I'm sorry' or 'Excuse me' is the polite way to apologize for a minor accident."
+        },
+        {
+            scenario: "First, mix the flour and sugar. ___, add the eggs.",
+            options: ["Then", "Finally", "However"],
+            answer: "Then",
+            explanation: "'Then' is a sequence connector used to indicate the next step in a process."
+        }
+    ];
+
+    // --- VISTA: Elementos del DOM ---
+    const startScreen = document.getElementById('start-screen');
+    const gameScreen = document.getElementById('game-screen');
+    const endScreen = document.getElementById('end-screen');
+    
+    const startBtn = document.getElementById('start-btn');
+    const restartBtn = document.getElementById('restart-btn');
+
+    const scenarioText = document.getElementById('scenario-text');
+    const optionsContainer = document.getElementById('options-container');
+    const explanationText = document.getElementById('explanation-text');
+
+    const questionCounter = document.getElementById('question-counter');
+    const scoreDisplay = document.getElementById('score-display');
+    const progressBar = document.getElementById('progress-bar');
+    
+    const finalScore = document.getElementById('final-score');
+    const finalMessage = document.getElementById('final-message');
+
+    // --- CONTROLADOR: Lógica del Juego ---
+    let currentQuestionIndex = 0;
+    let score = 0;
+
+    function startGame() {
+        currentQuestionIndex = 0;
+        score = 0;
+        // Shuffle the game data for replayability
+        gameData.sort(() => Math.random() - 0.5);
+        startScreen.classList.add('hidden');
+        endScreen.classList.add('hidden');
+        gameScreen.classList.remove('hidden');
+        updateScoreDisplay();
+        showQuestion();
+    }
+
+    function showQuestion() {
+        // Reset feedback
+        explanationText.classList.add('opacity-0');
+        optionsContainer.classList.remove('disabled-options');
+        
+        // Carga la pregunta actual
+        const question = gameData[currentQuestionIndex];
+        scenarioText.textContent = question.scenario;
+        
+        // Limpia opciones anteriores
+        optionsContainer.innerHTML = '';
+        
+        // Muestra las nuevas opciones
+        question.options.forEach(option => {
+            const button = document.createElement('button');
+            button.textContent = option;
+            button.classList.add('option-btn', 'w-full', 'bg-white', 'text-slate-700', 'border-2', 'border-[#32CD32]', 'font-semibold', 'py-3', 'px-4', 'rounded-lg', 'hover:bg-slate-50', 'hover:border-blue-500');
+            button.onclick = () => selectAnswer(button, option, question.answer);
+            optionsContainer.appendChild(button);
+        });
+
+        // Actualiza el progreso
+        questionCounter.textContent = `Pregunta ${currentQuestionIndex + 1} de ${gameData.length}`;
+        const progressPercentage = ((currentQuestionIndex) / gameData.length) * 100;
+        progressBar.style.width = `${progressPercentage}%`;
+    }
+
+    function selectAnswer(button, selectedOption, correctAnswer) {
+        optionsContainer.classList.add('disabled-options');
+        
+        const isCorrect = selectedOption === correctAnswer;
+        
+        if (isCorrect) {
+            score++;
+            button.classList.add('correct');
+        } else {
+            button.classList.add('incorrect');
+            // Muestra la respuesta correcta si se equivocaron
+            Array.from(optionsContainer.children).forEach(btn => {
+                if (btn.textContent === correctAnswer) {
+                    btn.classList.add('correct');
+                }
+            });
+        }
+        
+        updateScoreDisplay();
+
+        // Muestra la explicación
+        explanationText.textContent = gameData[currentQuestionIndex].explanation;
+        explanationText.classList.remove('opacity-0');
+
+        // Pasa a la siguiente pregunta después de un momento
+        setTimeout(() => {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < gameData.length) {
+                showQuestion();
+            } else {
+                endGame();
+            }
+        }, 2500); // 2.5 segundos para leer la explicación
+    }
+
+    function updateScoreDisplay() {
+        scoreDisplay.textContent = `Puntuación: ${score}`;
+    }
+
+    function endGame() {
+        progressBar.style.width = '100%';
+        gameScreen.classList.add('hidden');
+        endScreen.classList.remove('hidden');
+        
+        finalScore.textContent = `${score} / ${gameData.length}`;
+        
+        const percentage = (score / gameData.length) * 100;
+        if (percentage === 100) {
+            finalMessage.textContent = "¡Perfecto! Eres un maestro de la comunicación en inglés.";
+        } else if (percentage >= 70) {
+            finalMessage.textContent = "¡Excelente trabajo! Tienes un gran dominio de las expresiones.";
+        } else if (percentage >= 50) {
+            finalMessage.textContent = "¡Muy bien! Sigue practicando para perfeccionar tus habilidades.";
+        } else {
+            finalMessage.textContent = "¡Buen intento! La práctica hace al maestro. ¡No te rindas!";
+        }
+    }
+
+    // --- Event Listeners ---
+    startBtn.addEventListener('click', startGame);
+    restartBtn.addEventListener('click', startGame);
+    </script>
+</body>
+</html>
